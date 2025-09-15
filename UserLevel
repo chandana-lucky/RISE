@@ -1,0 +1,11 @@
+package com.SIMATS.rise.model;
+
+public class UserLevel {
+    private int user_id;
+    private int completed_level;
+
+    public UserLevel(int user_id, int completed_level) {
+        this.user_id = user_id;
+        this.completed_level = completed_level;
+    }
+}
