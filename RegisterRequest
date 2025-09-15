@@ -1,0 +1,15 @@
+package com.SIMATS.rise.model;
+
+public class RegisterRequest {
+    private String username;
+    private String email;
+    private String password;
+    private String confirm_password;
+
+    public RegisterRequest(String username, String email, String password, String confirm_password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.confirm_password = confirm_password;
+    }
+}
