@@ -1,0 +1,13 @@
+package com.SIMATS.rise.model;
+
+public class TaskProgressRequest {
+    public int user_id;
+    public String task_name;
+    public String status;
+
+    public TaskProgressRequest(int user_id, String task_name, String status) {
+        this.user_id = user_id;
+        this.task_name = task_name;
+        this.status = status;
+    }
+}
