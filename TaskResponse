@@ -1,0 +1,13 @@
+package com.SIMATS.rise.model;
+
+public class TaskResponse {
+    public boolean success;
+    public String message;
+    public int task_id;  // only when task is added
+    public String task_name; // only when retrieving tasks
+    public String status;
+
+     public String getTask_name() {
+         return task_name;
+     }
+}
