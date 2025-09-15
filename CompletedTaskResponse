@@ -1,0 +1,30 @@
+package com.SIMATS.rise.model;
+
+import com.google.gson.annotations.SerializedName;
+import java.util.List;
+
+public class CompletedTaskResponse {
+
+    private boolean success;
+    private String message;
+
+    private int total_completed;
+
+    private List<CompletedTask> tasks;
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public int getTotalCompleted() {
+        return total_completed;
+    }
+
+    public List<CompletedTask> getTasks() {
+        return tasks;
+    }
+}
