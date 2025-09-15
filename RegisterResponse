@@ -1,0 +1,7 @@
+package com.SIMATS.rise.model;
+
+public class RegisterResponse {
+    public String status;
+    public String message;
+    public int user_id;
+}
