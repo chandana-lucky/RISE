@@ -1,0 +1,127 @@
+<resources>
+    <!-- Labels and Hints -->
+    <string name="username_label">USERNAME</string>
+    <string name="username_hint">Username</string>
+    <string name="password_label">PASSWORD</string>
+    <string name="password_hint">Password</string>
+    <string name="submit">Login</string>
+    <string name="lets_begin">Let\'s\nBegin</string>
+    <string name="app_name">Ashi</string>
+    <string name="welcome_text">WELCOME..</string>
+    <string name="progress_label">Your Progress</string>
+    <string name="content_description_logo">App logo</string>
+    <string name="your_progress">Your Progress</string>
+
+    <!-- Companion Page Strings -->
+    <string name="back">Back</string>
+    <string name="profile_icon">Profile Icon</string>
+    <string name="username">Ashi</string>
+    <string name="my_companion_status">My Companion Status</string>
+    <string name="companion_image">Companion Image</string>
+    <string name="growth_level">Growth Level</string>
+    <string name="current_level">Current Level</string>
+    <string name="thirsty">Thirsty</string>
+    <string name="offline_stage_info">Stage Info Not Available (Offline Mode)</string>
+
+    <!-- Navigation Drawer -->
+    <string name="title_activity_menuactivity2">Menuactivity2</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <!-- Menu Items -->
+    <string name="action_settings">Settings</string>
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="app_logo">App Logo</string>
+    <string name="Rise">Ashi</string>
+    <string name="user_avatar">User Avatar</string>
+    <string name="my_journey">My Journey</string>
+    <string name="task_planned">Task Planned</string>
+    <string name="task1">Task 1</string>
+    <string name="task2">Task 2</string>
+    <string name="task3">Task 3</string>
+    <string name="achievements">Achievements</string>
+
+    <!-- Dashboard Titles -->
+    <string name="title_activity_dashboard">DashboardActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+
+    <!-- Password Screen -->
+    <string name="rise">YourAppName</string>
+    <string name="email_verified">Email Verified Successfully</string>
+    <string name="set_password_hint">Set Password</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+
+    <!-- Task Descriptions -->
+    <string name="task_planned_desc">These are the tasks you scheduled. Stay focused and complete your task.</string>
+    <string name="task_in_progress">Task in Progress</string>
+    <string name="task_in_progress_desc">These tasks are currently being worked on. You can update your progress and set reminders to help complete them efficiently.</string>
+    <string name="completed_tasks">Completed Tasks and Improvement Status</string>
+    <string name="completed_tasks_desc">Great job on completing your tasks!</string>
+
+    <!-- Custom Styles -->
+    <style name="MenuItem">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MenuItemContainer">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <string name="exit_warning">Are You Sure You WANT\nTO EXIT ?</string>
+    <string name="yes_button">YES</string>
+    <string name="no_button">NO</string>
+    <string name="warning_icon">Warning icon</string>
+
+    <string name="hint_enter_task_name">Enter task name</string>
+    <string name="hint_time_in_minutes">Time in minutes</string>
+    <string name="enter_task_details">Enter Task Details</string>
+    <string name="start_button">Start</string>
+    <string name="task_prefix">Task: </string>
+    <string name="time_prefix">Time: </string>
+    <string name="minutes">mins</string>
+
+    <string name="task_label">Task %1$d</string>
+
+    <string name="task_freeze">Task Freeze</string>
+    <string name="undo_freeze">Undo Freeze</string>
+    <string name="start">Start</string>
+    <string name="task_complete_title">Task Complete</string>
+    <string name="task_complete_msg">Was the task completed?</string>
+    <string name="done">Done</string>
+    <string name="not_done">Not Done</string>
+
+    <string name="task1_title">Task 1: Static Task</string>
+    <string name="freeze_button">Freeze</string>
+    <string name="back_to_planned">Back </string>
+
+    <string name="loading">Loading...</string>
+    <string name="fetch_failed">Failed to fetch stage</string>
+    <string name="network_error">Network error</string>
+
+    <style name="CustomDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowMinWidthMajor">90%</item>
+    </style>
+
+
+        <string name="hint_task_name">Enter task name</string>
+        <string name="hint_hours">HH</string>
+        <string name="hint_minutes">MM</string>
+        <string name="hint_seconds">SS</string>
+
+    <string name="reminder_button">Reminder</string>
+
+
+</resources>
