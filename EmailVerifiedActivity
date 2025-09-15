@@ -1,0 +1,79 @@
+package com.SIMATS.rise;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.VerifyEmailRequest;
+import com.SIMATS.rise.model.VerifyEmailResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class EmailVerifiedActivity extends AppCompatActivity {
+
+    EditText emailInput;
+    Button verifyEmailBtn;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_email_verified);
+
+        emailInput = findViewById(R.id.emailInput);
+        verifyEmailBtn = findViewById(R.id.verifyEmailBtn);
+
+        verifyEmailBtn.setOnClickListener(v -> {
+            String email = emailInput.getText().toString().trim();
+
+            if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Enter a valid email", Toast.LENGTH_SHORT).show();
+            } else {
+                verifyEmail(email);
+            }
+        });
+    }
+
+    private void verifyEmail(String email) {
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        VerifyEmailRequest request = new VerifyEmailRequest(email);
+
+        apiService.verifyEmail(request).enqueue(new Callback<VerifyEmailResponse>() {
+            @Override
+            public void onResponse(Call<VerifyEmailResponse> call, Response<VerifyEmailResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    VerifyEmailResponse res = response.body();
+
+                    if ("success".equalsIgnoreCase(res.getStatus())) {
+                        Toast.makeText(EmailVerifiedActivity.this, res.getMessage(), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(EmailVerifiedActivity.this, SetPasswordActivity.class);
+                        intent.putExtra("email", email);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(EmailVerifiedActivity.this, "Incorrect Email ID", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(EmailVerifiedActivity.this,
+                            "Server Error\nCode: " + response.code(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<VerifyEmailResponse> call, Throwable t) {
+                Toast.makeText(EmailVerifiedActivity.this,
+                        "Network Error: " + t.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+}
