@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1E1E1E"
+    android:padding="24dp">
+
+  <LinearLayout
+      android:id="@+id/tasksLayout"
+      android:orientation="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+    <!-- Static Task 1 -->
+    <TextView
+        android:id="@+id/task1Title"
+        android:text="@string/task1_title"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <ProgressBar
+        android:id="@+id/task1Progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="0"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:progressTint="@android:color/holo_purple" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="8dp">
+
+      <Button
+          android:id="@+id/task1StartBtn"
+          android:text="@string/start_button"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:backgroundTint="@android:color/holo_orange_light"
+          style="?android:attr/borderlessButtonStyle" />
+
+      <Button
+          android:id="@+id/task1ReminderBtn"
+          android:text="@string/reminder_button"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- Dynamic Tasks will be added here -->
+    <LinearLayout
+        android:id="@+id/dynamicTasksLayout"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- Back to Planned Button -->
+    <Button
+        android:id="@+id/backToPlannedButton"
+        android:text="@string/back_to_planned"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp" />
+  </LinearLayout>
+</ScrollView>
