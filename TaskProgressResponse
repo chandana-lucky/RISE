@@ -1,0 +1,15 @@
+package com.SIMATS.rise.model;
+
+import java.util.List;
+
+public class TaskProgressResponse {
+    public boolean success;
+    public List<TaskProgressItem> tasks;
+
+    public static class TaskProgressItem {
+        public int id;
+        public String task_name;
+        public String status;
+        public String created_at;
+    }
+}
