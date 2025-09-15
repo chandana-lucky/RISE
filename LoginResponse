@@ -1,0 +1,23 @@
+package com.SIMATS.rise.model;
+
+import com.google.gson.annotations.SerializedName;
+
+public class LoginResponse {
+    private String status;
+    private String message;
+
+    @SerializedName("user_id")
+    private int userId;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+}
