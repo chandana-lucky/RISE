@@ -1,0 +1,117 @@
+package com.SIMATS.rise;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.TaskRequest;
+import com.SIMATS.rise.model.TaskResponse;
+
+import java.util.ArrayList;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class PlannedTasksActivity extends AppCompatActivity {
+
+    private LinearLayout taskContainer;
+    private EditText taskInput;
+    private Button addTaskBtn, backBtn, inProgressBtn;
+    private ImageView profileIcon;
+
+    private ArrayList<Integer> taskIdList = new ArrayList<>();
+    private ArrayList<String> taskList = new ArrayList<>();
+    private static final int MAX_TASKS = 30;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_planned_tasks);
+
+        taskContainer = findViewById(R.id.task_container);
+        taskInput = findViewById(R.id.task_input);
+        addTaskBtn = findViewById(R.id.add_button);
+        backBtn = findViewById(R.id.backBtn);
+        inProgressBtn = findViewById(R.id.inProgressBtn);
+        profileIcon = findViewById(R.id.profileIcon);
+
+        addTaskBtn.setOnClickListener(v -> addTask());
+
+        inProgressBtn.setOnClickListener(v -> {
+            // Start InProgressTasksActivity without passing task data
+            Intent intent = new Intent(PlannedTasksActivity.this, InProgressTasksActivity.class);
+            startActivity(intent);
+        });
+
+        backBtn.setOnClickListener(v -> finish());
+
+        profileIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(PlannedTasksActivity.this, DashboardActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    private void addTask() {
+        String taskName = taskInput.getText().toString().trim();
+
+        if (taskName.isEmpty()) {
+            Toast.makeText(this, "Please enter a task name", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (taskList.size() >= MAX_TASKS) {
+            Toast.makeText(this, "Maximum 30 tasks allowed", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        SharedPreferences preferences = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+        int userId = preferences.getInt("user_id", -1);
+
+        TaskRequest taskRequest = new TaskRequest(taskName, "planned", userId);
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        Call<TaskResponse> call = apiService.insertTask(taskRequest);
+
+        call.enqueue(new Callback<TaskResponse>() {
+            @Override
+            public void onResponse(Call<TaskResponse> call, Response<TaskResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().success) {
+                    int taskId = response.body().task_id;
+
+                    // UI: Add checkbox
+                    CheckBox newTask = new CheckBox(PlannedTasksActivity.this);
+                    newTask.setText(taskName);
+                    newTask.setTextColor(getResources().getColor(android.R.color.white));
+                    taskContainer.addView(newTask);
+
+                    // Add to local lists
+                    taskList.add(taskName);
+                    taskIdList.add(taskId);
+
+                    // Clear input
+                    taskInput.setText("");
+
+                    Toast.makeText(PlannedTasksActivity.this, "Task saved to DB", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(PlannedTasksActivity.this, "Failed to save task", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TaskResponse> call, Throwable t) {
+                Toast.makeText(PlannedTasksActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+}
