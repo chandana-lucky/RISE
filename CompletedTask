@@ -1,0 +1,24 @@
+package com.SIMATS.rise.model;
+
+public class CompletedTask {
+    private int task_id;
+    private String task_name;
+    private String status;
+    private String updated_at;
+
+    public int getTask_id() {
+        return task_id;
+    }
+
+    public String getTask_name() {
+        return task_name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getUpdated_at() {
+        return updated_at;
+    }
+}
