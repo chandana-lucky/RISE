@@ -1,0 +1,83 @@
+package com.SIMATS.rise;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.LoginRequest;
+import com.SIMATS.rise.model.LoginResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class LetsBeginActivity extends AppCompatActivity {
+
+    EditText username, password;
+    Button submitBtn, forgotPasswordBtn;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_lets_begin);
+
+        username = findViewById(R.id.username);
+        password = findViewById(R.id.password);
+        submitBtn = findViewById(R.id.submitBtn);
+        forgotPasswordBtn = findViewById(R.id.forgotPasswordBtn);
+
+        submitBtn.setOnClickListener(v -> {
+            String user = username.getText().toString().trim();
+            String pass = password.getText().toString().trim();
+
+            if (user.isEmpty() || pass.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            } else {
+                loginUser(user, pass);
+            }
+        });
+
+        forgotPasswordBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(LetsBeginActivity.this, EmailVerifiedActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    private void loginUser(String user, String pass) {
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        LoginRequest request = new LoginRequest(user, pass);
+
+        apiService.loginUser(request).enqueue(new Callback<LoginResponse>() {
+            @Override
+            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    if ("Login successful".equalsIgnoreCase(response.body().getMessage())) {
+                        SharedPreferences preferences = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+                        preferences.edit().putInt("user_id", response.body().getUserId()).apply();
+
+                        Toast.makeText(LetsBeginActivity.this, "Login Success!", Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(LetsBeginActivity.this, WelcomeActivity.class));
+                        finish();
+                    } else {
+                        Toast.makeText(LetsBeginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(LetsBeginActivity.this, "Login failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<LoginResponse> call, Throwable t) {
+                Toast.makeText(LetsBeginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+}
