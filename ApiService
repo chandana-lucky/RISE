@@ -1,0 +1,114 @@
+package com.SIMATS.rise.api;
+
+import com.SIMATS.rise.model.ApiResponse;
+import com.SIMATS.rise.model.CompletedTaskResponse;
+import com.SIMATS.rise.model.LoginRequest;
+import com.SIMATS.rise.model.LoginResponse;
+import com.SIMATS.rise.model.PlantGrowthRequest;
+import com.SIMATS.rise.model.PlantGrowthResponse;
+import com.SIMATS.rise.model.RegisterRequest;
+import com.SIMATS.rise.model.RegisterResponse;
+import com.SIMATS.rise.model.ResetPasswordRequest;
+import com.SIMATS.rise.model.ResetPasswordResponse;
+import com.SIMATS.rise.model.TaskRequest;
+import com.SIMATS.rise.model.TaskResponse;
+import com.SIMATS.rise.model.TaskProgressRequest;
+import com.SIMATS.rise.model.TaskProgressResponse;
+import com.SIMATS.rise.model.TaskProgressUpdateRequest;
+import com.SIMATS.rise.model.UpdateStatusRequest;
+import com.SIMATS.rise.model.UpdateStatusResponse;
+import com.SIMATS.rise.model.UserLevel;
+import com.SIMATS.rise.model.VerifyEmailRequest;
+import com.SIMATS.rise.model.VerifyEmailResponse;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.Headers;
+import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Query;
+
+public interface ApiService {
+
+    // LOGIN
+    @Headers("Content-Type: application/json")
+    @POST("Rise/login.php")
+    Call<LoginResponse> loginUser(@Body LoginRequest loginRequest);
+
+    // REGISTER
+    @Headers("Content-Type: application/json")
+    @POST("Rise/register.php")
+    Call<RegisterResponse> registerUser(@Body RegisterRequest registerRequest);
+
+    // ADD PLANNED TASK
+    @Headers("Content-Type: application/json")
+    @POST("Rise/tasks_handler.php")
+    Call<TaskResponse> insertTask(@Body TaskRequest task);
+
+    // GET PLANNED TASKS
+    @GET("Rise/tasks_handler.php")
+    Call<List<TaskResponse>> getTasks(@Query("user_id") int userId);
+
+    // UPDATE USER LEVEL
+    @Headers("Content-Type: application/json")
+    @POST("Rise/upsert_user_level.php")
+    Call<ApiResponse> updateUserLevel(@Body UserLevel userLevel);
+
+    // ADD TASK PROGRESS
+    @Headers("Content-Type: application/json")
+    @POST("Rise/taskprogress.php")
+    Call<Map<String, Object>> addTaskProgress(@Body TaskProgressRequest request);
+
+    // UPDATE TASK PROGRESS
+    @Headers("Content-Type: application/json")
+    @PUT("Rise/taskprogress.php")
+    Call<Map<String, Object>> updateTaskProgress(@Body TaskProgressUpdateRequest request);
+
+    // GET TASK PROGRESS BY USER
+    @GET("Rise/taskprogress.php")
+    Call<TaskProgressResponse> getTaskProgress(@Query("user_id") int userId);
+
+    // ADD TASK (alternative version)
+    @Headers("Content-Type: application/json")
+    @POST("Rise/tasks_handler.php")
+    Call<ApiResponse> addTask(@Body HashMap<String, String> taskData);
+
+    // GET PENDING TASKS
+    @GET("Rise/get_pending_tasks.php")
+    Call<ApiResponse> getPendingTasks(@Query("user_id") int userId);
+
+    // ✅ FINAL: JSON-based task status update (used in StartTaskActivity)
+    @Headers("Content-Type: application/json")
+    @POST("Rise/update_status.php")
+    Call<UpdateStatusResponse> updateTaskStatus(@Body UpdateStatusRequest request);
+
+    // GET COMPLETED TASKS
+    @GET("Rise/get_completed_task.php")
+    Call<CompletedTaskResponse> getCompletedTasks(@Query("user_id") int userId);
+
+    @GET("Rise/get_plant_growth[1].php")
+    Call<PlantGrowthResponse> getPlantGrowthStage(@Query("total_completed") int totalCompleted);
+
+    @Headers("Content-Type: application/json")
+    @POST("Rise/verify_email.php")
+    Call<VerifyEmailResponse> verifyEmail(@Body VerifyEmailRequest request);
+
+    @Headers("Content-Type: application/json")
+    @POST("Rise/reset_password.php")
+    Call<ResetPasswordResponse> resetPassword(@Body ResetPasswordRequest request);
+
+    @GET("Rise/get_plant_growth[1].php")
+    Call<PlantGrowthResponse> getPlantGrowth(@Query("user_id") int userId);
+
+    @POST("Rise/get_plant_growth[1].php")
+    Call<PlantGrowthResponse> getPlantGrowth(@Body PlantGrowthRequest request);
+
+
+
+
+}
