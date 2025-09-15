@@ -1,0 +1,121 @@
+package com.SIMATS.rise;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.CompletedTask;
+import com.SIMATS.rise.model.CompletedTaskResponse;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class CompletedTasksActivity extends AppCompatActivity {
+
+    Button backButton, goToAchievementsBtn, viewPlantBtn;
+    TextView totalText;
+    LinearLayout taskListContainer;
+    int totalCompletedTasks = 0;
+    int userId;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_completed_tasks);
+
+        backButton = findViewById(R.id.backButton);
+        goToAchievementsBtn = findViewById(R.id.viewAchievementsBtn);
+        viewPlantBtn = findViewById(R.id.viewPlantBtn);
+        totalText = findViewById(R.id.totalText);
+        taskListContainer = findViewById(R.id.taskListContainer);
+
+        SharedPreferences preferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
+        userId = preferences.getInt("user_id", -1);
+
+        boolean cameFromStartTask = getIntent().getBooleanExtra("new_task_completed", false);
+
+        if (userId != -1) {
+            if (cameFromStartTask) {
+                new Handler().postDelayed(() -> fetchCompletedTasks(userId), 1500);
+            } else {
+                fetchCompletedTasks(userId);
+            }
+        } else {
+            Log.e("USERID_ERROR", "Invalid user ID");
+            totalText.setText("User not logged in");
+        }
+
+        goToAchievementsBtn.setOnClickListener(v -> {
+            Intent achievementsIntent = new Intent(CompletedTasksActivity.this, AchievementsActivity.class);
+            achievementsIntent.putExtra("completed_tasks", totalCompletedTasks);
+            startActivity(achievementsIntent);
+        });
+
+        viewPlantBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(CompletedTasksActivity.this, CompanionStatusActivity.class);
+            intent.putExtra("completed_tasks", totalCompletedTasks);
+            startActivity(intent);
+        });
+
+        backButton.setOnClickListener(view -> {
+            Intent backIntent = new Intent(CompletedTasksActivity.this, MyJourneyActivity.class);
+            startActivity(backIntent);
+            finish();
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (userId != -1) {
+            fetchCompletedTasks(userId);
+        }
+    }
+
+    private void fetchCompletedTasks(int userId) {
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        Call<CompletedTaskResponse> call = apiService.getCompletedTasks(userId);
+
+        call.enqueue(new Callback<CompletedTaskResponse>() {
+            @Override
+            public void onResponse(Call<CompletedTaskResponse> call, Response<CompletedTaskResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    totalCompletedTasks = response.body().getTotalCompleted();
+                    List<CompletedTask> taskList = response.body().getTasks();
+
+                    totalText.setText("Total = " + totalCompletedTasks);
+                    taskListContainer.removeAllViews();
+
+                    for (CompletedTask task : taskList) {
+                        TextView taskText = new TextView(CompletedTasksActivity.this);
+                        taskText.setText("• " + task.getTask_name());
+                        taskText.setTextColor(getResources().getColor(android.R.color.white));
+                        taskText.setTextSize(16);
+                        taskListContainer.addView(taskText);
+                    }
+                } else {
+                    totalText.setText("Total = 0");
+                    Log.e("CompletedTasks", "API response error: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CompletedTaskResponse> call, Throwable t) {
+                totalText.setText("Error: " + t.getMessage());
+                Log.e("CompletedTasks", "API failure", t);
+            }
+        });
+    }
+}
