@@ -1,0 +1,277 @@
+package com.SIMATS.rise;
+
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.UpdateStatusRequest;
+import com.SIMATS.rise.model.UpdateStatusResponse;
+
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class StartTaskActivity extends AppCompatActivity {
+
+    TextView taskNameText, taskTimeText, timerText;
+    ImageView clockImage;
+    Button markDoneBtn, startTaskBtn;
+
+    CountDownTimer timer;
+    int totalTimeInMillis = 0;
+    String taskName = "";
+    int taskId = -1;
+
+    Vibrator vibrator;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_start_task);
+
+        // --- view bindings (match your XML IDs) ---
+        taskNameText = findViewById(R.id.taskTitle);      // TextView that shows selected task
+        taskTimeText = findViewById(R.id.timeText);       // TextView that shows chosen time
+        timerText = findViewById(R.id.timerText);         // TextView showing running timer (HH:MM:SS)
+        clockImage = findViewById(R.id.clockImage);
+        markDoneBtn = findViewById(R.id.markDoneBtn);
+        startTaskBtn = findViewById(R.id.startTaskBtn);
+
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+
+        // initial UI state
+        clockImage.setVisibility(View.INVISIBLE);
+        timerText.setVisibility(View.INVISIBLE);
+        markDoneBtn.setEnabled(false);
+        startTaskBtn.setEnabled(false); // enable after user inputs time via dialog
+
+        // Get task_id from intent (must be provided by caller)
+        Intent intent = getIntent();
+        taskId = intent.getIntExtra("task_id", -1);
+
+        if (taskId == -1) {
+            showAlert("Error: Task ID missing!");
+            finish();
+            return;
+        }
+
+        // show task/time input dialog immediately
+        showTaskInputDialog();
+
+        // start button — check that totalTimeInMillis > 0 before starting
+        startTaskBtn.setOnClickListener(v -> {
+            if (totalTimeInMillis <= 0) {
+                showAlert("Please enter a valid time (HH:MM:SS) before starting.");
+                return;
+            }
+            startNewTimer(totalTimeInMillis);
+        });
+
+        // mark done button — updates backend
+        markDoneBtn.setOnClickListener(view -> updateTaskStatus());
+    }
+
+    private void startNewTimer(int timeInMillis) {
+        clockImage.setVisibility(View.VISIBLE);
+        timerText.setVisibility(View.VISIBLE);
+        markDoneBtn.setEnabled(false);
+
+        if (timer != null) timer.cancel();
+
+        timer = new CountDownTimer(timeInMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                int hours = (int) (millisUntilFinished / (1000 * 60 * 60));
+                int minutes = (int) ((millisUntilFinished / (1000 * 60)) % 60);
+                int seconds = (int) ((millisUntilFinished / 1000) % 60);
+
+                timerText.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds));
+            }
+
+            @Override
+            public void onFinish() {
+                timerText.setText("00:00:00");
+                markDoneBtn.setEnabled(true);
+
+                if (vibrator != null) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(5000, VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        vibrator.vibrate(5000);
+                    }
+                }
+
+                new AlertDialog.Builder(StartTaskActivity.this)
+                        .setTitle("Notice")
+                        .setMessage("Time Completed!")
+                        .setCancelable(false)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            if (vibrator != null) vibrator.cancel();
+                            showExtendTimeDialog();
+                        })
+                        .show();
+            }
+        }.start();
+    }
+
+    private void showExtendTimeDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Extend Time")
+                .setMessage("Do you want to extend the time?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", (dialog, which) -> showCustomTimeInputDialog())
+                .setNegativeButton("No", (dialog, which) -> {
+                    // IMPORTANT: update the DB first — otherwise CompletedTasksActivity won't show the task
+                    updateTaskStatus();
+                })
+                .show();
+    }
+
+    private void showCustomTimeInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Extra Time");
+
+        // re-uses the same dialog layout you had (dialog_task_input) with fields:
+        // taskNameInput (optional), hoursInput, minutesInput, secondsInput
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_task_input, null);
+        EditText hoursInput = dialogView.findViewById(R.id.hoursInput);
+        EditText minutesInput = dialogView.findViewById(R.id.minutesInput);
+        EditText secondsInput = dialogView.findViewById(R.id.secondsInput);
+
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Start", (dialog, which) -> {
+            int hours = parseNumber(hoursInput.getText().toString());
+            int minutes = parseNumber(minutesInput.getText().toString());
+            int seconds = parseNumber(secondsInput.getText().toString());
+
+            int newTotal = (hours * 3600 + minutes * 60 + seconds) * 1000;
+            if (newTotal <= 0) {
+                showAlert("Please enter a valid duration (HH:MM:SS).");
+                return;
+            }
+            totalTimeInMillis = newTotal;
+            startNewTimer(totalTimeInMillis);
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void updateTaskStatus() {
+        // make sure to use the same ApiClient/ApiService you used elsewhere
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        UpdateStatusRequest request = new UpdateStatusRequest(taskId, "completed");
+
+        Call<UpdateStatusResponse> call = apiService.updateTaskStatus(request);
+        call.enqueue(new Callback<UpdateStatusResponse>() {
+            @Override
+            public void onResponse(Call<UpdateStatusResponse> call, Response<UpdateStatusResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    // small delay to let UI settle (optional)
+                    new Handler().postDelayed(() -> {
+                        Intent intent = new Intent(StartTaskActivity.this, CompletedTasksActivity.class);
+                        intent.putExtra("new_task_completed", true);
+                        startActivity(intent);
+                        finish();
+                    }, 700);
+                } else {
+                    // show helpful message returned from server if present
+                    String msg = "Failed to update task";
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        msg = response.body().getMessage();
+                    }
+                    showAlert(msg);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UpdateStatusResponse> call, Throwable t) {
+                showAlert("Network Error: " + (t.getMessage() == null ? "unknown" : t.getMessage()));
+            }
+        });
+    }
+
+    private void showTaskInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Task Details");
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_task_input, null);
+
+        EditText taskNameInput = dialogView.findViewById(R.id.taskNameInput);
+        EditText hoursInput = dialogView.findViewById(R.id.hoursInput);
+        EditText minutesInput = dialogView.findViewById(R.id.minutesInput);
+        EditText secondsInput = dialogView.findViewById(R.id.secondsInput);
+
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Start", (dialog, which) -> {
+            taskName = taskNameInput.getText().toString().trim();
+            int hours = parseNumber(hoursInput.getText().toString());
+            int minutes = parseNumber(minutesInput.getText().toString());
+            int seconds = parseNumber(secondsInput.getText().toString());
+
+            totalTimeInMillis = (hours * 3600 + minutes * 60 + seconds) * 1000;
+            if (totalTimeInMillis <= 0) {
+                showAlert("Please enter a non-zero duration.");
+                // keep startTaskBtn disabled until valid input next time
+                startTaskBtn.setEnabled(false);
+                return;
+            }
+
+            // update UI with chosen values and enable Start button
+            taskNameText.setText("Task: " + (taskName.isEmpty() ? "Unnamed Task" : taskName));
+            taskTimeText.setText(String.format("Time: %02d:%02d:%02d", hours, minutes, seconds));
+            startTaskBtn.setEnabled(true);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // user cancelled the input — if no valid time is set, keep UI disabled and allow them to close
+            if (totalTimeInMillis <= 0) {
+                showAlert("You must set a time to start the task.");
+            }
+        });
+
+        builder.show();
+    }
+
+    private int parseNumber(String str) {
+        try {
+            return Integer.parseInt(str.trim());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private void showAlert(String msg) {
+        new AlertDialog.Builder(this)
+                .setTitle("Notice")
+                .setMessage(msg)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (timer != null) timer.cancel();
+        if (vibrator != null) vibrator.cancel();
+    }
+}
