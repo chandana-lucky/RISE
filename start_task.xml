@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/start_task_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:padding="24dp">
+
+    <!-- Task Info Card -->
+    <LinearLayout
+        android:id="@+id/taskInfoCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@android:color/white"
+        android:elevation="6dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:tint="#37474F"
+                android:layout_marginRight="8dp" />
+
+            <TextView
+                android:id="@+id/taskTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Task: -"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#263238" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/timeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time: 00:00:00"
+            android:textSize="14sp"
+            android:textColor="#546E7A"
+            android:layout_marginTop="6dp" />
+    </LinearLayout>
+
+    <!-- Timer Card -->
+    <LinearLayout
+        android:id="@+id/timerCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp"
+        android:background="@android:color/white"
+        android:elevation="6dp"
+        android:layout_below="@id/taskInfoCard"
+        android:layout_marginTop="40dp">
+
+        <ImageView
+            android:id="@+id/clockImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@android:drawable/ic_lock_idle_alarm"
+            android:tint="#90A4AE" />
+
+        <TextView
+            android:id="@+id/timerText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00:00"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#263238"
+            android:layout_marginTop="12dp" />
+    </LinearLayout>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_below="@id/timerCard"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/startTaskBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="▶ Start Task"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="#FFF"
+            android:background="#4CAF50"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/markDoneBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✅ Mark as Done"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="#FFF"
+            android:background="#2196F3" />
+    </LinearLayout>
+
+</RelativeLayout>
