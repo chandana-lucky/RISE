@@ -1,0 +1,198 @@
+package com.SIMATS.rise;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.CalendarContract;
+import android.util.Log;
+import android.view.Gravity;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.SIMATS.rise.api.ApiClient;
+import com.SIMATS.rise.api.ApiService;
+import com.SIMATS.rise.model.ApiResponse;
+import com.SIMATS.rise.model.Task;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class InProgressTasksActivity extends AppCompatActivity {
+
+    LinearLayout dynamicTasksLayout;
+    Button backToPlannedButton;
+    ApiService apiService;
+    private ArrayList<Integer> displayedTaskIds = new ArrayList<>();
+    private HashMap<Integer, Handler> progressHandlers = new HashMap<>();
+    private static final long PROGRESS_UPDATE_INTERVAL = 2 * 60 * 1000; // 2 minutes
+    private static final int PROGRESS_INCREMENT = 10; // +10% progress
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_in_progress_tasks);
+
+        dynamicTasksLayout = findViewById(R.id.dynamicTasksLayout);
+        backToPlannedButton = findViewById(R.id.backToPlannedButton);
+
+        apiService = ApiClient.getRetrofit().create(ApiService.class);
+
+        // Get userId from SharedPreferences
+        SharedPreferences preferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
+        int userId = preferences.getInt("user_id", -1);
+
+        if (userId != -1) {
+            loadPendingTasks(userId);
+        } else {
+            Log.e("USERID_ERROR", "Invalid user ID");
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+        backToPlannedButton.setOnClickListener(v -> {
+            Intent backIntent = new Intent(InProgressTasksActivity.this, PlannedTasksActivity.class);
+            startActivity(backIntent);
+            finish();
+        });
+    }
+
+    private void loadPendingTasks(int userId) {
+        Call<ApiResponse> call = apiService.getPendingTasks(userId);
+
+        call.enqueue(new Callback<ApiResponse>() {
+            @Override
+            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    java.util.List<Task> tasks = response.body().getTasks();
+                    if (tasks != null && !tasks.isEmpty()) {
+                        for (Task task : tasks) {
+                            if (!displayedTaskIds.contains(task.getTask_id())) {
+                                if ("pending".equals(task.getStatus())) {
+                                    task.setStatus("in_progress");
+                                }
+                                addDynamicTask(task);
+                                displayedTaskIds.add(task.getTask_id());
+                            }
+                        }
+                    } else {
+                        Log.d("API_INFO", "No tasks found for user");
+                        Toast.makeText(InProgressTasksActivity.this, "No tasks available", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Log.e("API_ERROR", "Response invalid or unsuccessful");
+                    Toast.makeText(InProgressTasksActivity.this, "Failed to load tasks", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
+                Log.e("API_FAILURE", "Error: " + t.getMessage());
+                Toast.makeText(InProgressTasksActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void addDynamicTask(Task task) {
+        LinearLayout taskLayout = new LinearLayout(this);
+        taskLayout.setOrientation(LinearLayout.VERTICAL);
+        taskLayout.setPadding(0, 24, 0, 24);
+
+        TextView title = new TextView(this);
+        title.setText("Task: " + task.getTask_name() + " (Status: " + task.getStatus() + ")");
+        title.setTextColor(getResources().getColor(android.R.color.white));
+        title.setTextSize(18);
+        taskLayout.addView(title);
+
+        ProgressBar progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setMax(100);
+        progressBar.setProgress(0);
+        progressBar.setProgressTintList(getResources().getColorStateList(android.R.color.holo_purple));
+        progressBar.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        taskLayout.addView(progressBar);
+
+        LinearLayout buttonRow = new LinearLayout(this);
+        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+        buttonRow.setGravity(Gravity.END);
+        buttonRow.setPadding(0, 12, 0, 0);
+
+        Button startButton = new Button(this);
+        startButton.setText("Start");
+        startButton.setBackgroundTintList(getResources().getColorStateList(android.R.color.holo_orange_light));
+        startButton.setOnClickListener(v -> {
+            Intent intent = new Intent(InProgressTasksActivity.this, StartTaskActivity.class);
+            intent.putExtra("task_id", task.getTask_id());
+            startActivity(intent);
+        });
+        buttonRow.addView(startButton);
+
+        // Reminder Button (replaces Freeze)
+        Button reminderButton = new Button(this);
+        reminderButton.setText("Reminder");
+        reminderButton.setOnClickListener(v -> {
+            Calendar beginTime = Calendar.getInstance();
+            beginTime.add(Calendar.MINUTE, 5); // Default: 5 minutes from now
+            Calendar endTime = (Calendar) beginTime.clone();
+            endTime.add(Calendar.HOUR, 1);
+
+            Intent intent = new Intent(Intent.ACTION_INSERT)
+                    .setData(CalendarContract.Events.CONTENT_URI)
+                    .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
+                    .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis())
+                    .putExtra(CalendarContract.Events.TITLE, "Task Reminder: " + task.getTask_name())
+                    .putExtra(CalendarContract.Events.DESCRIPTION, "Reminder for your in-progress task")
+                    .putExtra(CalendarContract.Events.EVENT_LOCATION, "SIMATS App")
+                    .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_BUSY);
+
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "No calendar app found!", Toast.LENGTH_SHORT).show();
+            }
+        });
+        buttonRow.addView(reminderButton);
+
+        taskLayout.addView(buttonRow);
+        dynamicTasksLayout.addView(taskLayout);
+
+        // Progress bar auto update
+        if ("in_progress".equals(task.getStatus())) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            Runnable progressRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    int currentProgress = progressBar.getProgress();
+                    if (currentProgress < 100) {
+                        progressBar.setProgress(currentProgress + PROGRESS_INCREMENT);
+                        handler.postDelayed(this, PROGRESS_UPDATE_INTERVAL);
+                    }
+                }
+            };
+            handler.post(progressRunnable);
+            progressHandlers.put(task.getTask_id(), handler);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        for (Handler handler : progressHandlers.values()) {
+            handler.removeCallbacksAndMessages(null);
+        }
+        progressHandlers.clear();
+    }
+}
